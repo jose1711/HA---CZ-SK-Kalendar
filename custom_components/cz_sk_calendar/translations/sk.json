@@ -24,8 +24,14 @@
     "step": {
       "init": {
         "title": "Nastavenie CZ/SK kalendára",
+        "description": "Voliteľné zoznamy udalostí: použite DD.MM | Názov (opakované ročne) alebo YYYY-MM-DD | Názov (jednorazovo). Viac položiek môžete oddeliť znakom | na jednom riadku.",
         "data": {
-          "region": "Región"
+          "region": "Región",
+          "custom_birthdays": "Vlastné narodeniny",
+          "custom_holidays": "Vlastné sviatky",
+          "reminder_days": "Koľko dní vopred pripomínať",
+          "reminder_daily": "Pripomínať denne v okne",
+          "custom_events": "Vlastné udalosti (zastaralé)"
         }
       }
     }
@@ -47,17 +53,38 @@
       "holiday_name": {
         "name": "Názov sviatku"
       },
+      "special_day": {
+        "name": "Významný deň"
+      },
+      "next_birthday": {
+        "name": "Ďalšie narodeniny"
+      },
+      "days_to_birthday": {
+        "name": "Dní do narodenín"
+      },
+      "next_family_holiday": {
+        "name": "Ďalší rodinný sviatok"
+      },
+      "days_to_family_holiday": {
+        "name": "Dní do rodinného sviatku"
+      },
       "vacation_name": {
         "name": "Názov prázdnin"
       },
       "next_holiday": {
         "name": "Ďalší sviatok"
       },
+      "next_special_day": {
+        "name": "Ďalší významný deň"
+      },
       "next_vacation": {
         "name": "Ďalšie prázdniny"
       },
       "days_to_holiday": {
         "name": "Dní do sviatku"
+      },
+      "days_to_special_day": {
+        "name": "Dní do významného dňa"
       },
       "days_to_vacation": {
         "name": "Dní do prázdnin"

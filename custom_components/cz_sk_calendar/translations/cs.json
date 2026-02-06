@@ -24,8 +24,14 @@
     "step": {
       "init": {
         "title": "Nastavení CZ/SK kalendáře",
+        "description": "Volitelné seznamy událostí: použijte DD.MM | Název (opakovaně ročně) nebo YYYY-MM-DD | Název (jednorázově). Více položek můžete oddělit znakem | na jednom řádku.",
         "data": {
-          "region": "Region"
+          "region": "Region",
+          "custom_birthdays": "Vlastní narozeniny",
+          "custom_holidays": "Vlastní svátky",
+          "reminder_days": "Kolik dní předem připomínat",
+          "reminder_daily": "Připomínat denně v okně",
+          "custom_events": "Vlastní události (zastaralé)"
         }
       }
     }
@@ -47,17 +53,38 @@
       "holiday_name": {
         "name": "Název svátku"
       },
+      "special_day": {
+        "name": "Významný den"
+      },
+      "next_birthday": {
+        "name": "Příští narozeniny"
+      },
+      "days_to_birthday": {
+        "name": "Dní do narozenin"
+      },
+      "next_family_holiday": {
+        "name": "Příští rodinný svátek"
+      },
+      "days_to_family_holiday": {
+        "name": "Dní do rodinného svátku"
+      },
       "vacation_name": {
         "name": "Název prázdnin"
       },
       "next_holiday": {
         "name": "Příští svátek"
       },
+      "next_special_day": {
+        "name": "Příští významný den"
+      },
       "next_vacation": {
         "name": "Příští prázdniny"
       },
       "days_to_holiday": {
         "name": "Dní do svátku"
+      },
+      "days_to_special_day": {
+        "name": "Dní do významného dne"
       },
       "days_to_vacation": {
         "name": "Dní do prázdnin"

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import calendar
+import re
 from datetime import date, timedelta
 from typing import Any
 
@@ -10,7 +11,16 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import CONF_COUNTRY, CONF_REGION, COUNTRY_CZ
+from .const import (
+    CONF_COUNTRY,
+    CONF_REGION,
+    CONF_CUSTOM_EVENTS,
+    CONF_CUSTOM_BIRTHDAYS,
+    CONF_CUSTOM_HOLIDAYS,
+    CONF_REMINDER_DAYS,
+    CONF_REMINDER_DAILY,
+    COUNTRY_CZ,
+)
 from .entity import CZSKEntity
 from .core import (
     get_all_holidays,
@@ -29,6 +39,141 @@ from .core import (
     is_vacation,
     is_workday,
 )
+
+
+_CUSTOM_ENTRY_RE = re.compile(
+    r"^\s*(?P<date>(\d{4}-\d{1,2}-\d{1,2})|(\d{1,2}[.-]\d{1,2})|(\d{1,2}-\d{1,2}))\s*[-|;]\s*(?P<name>.+)$"
+)
+
+
+def _iter_custom_entries(raw: str) -> list[str]:
+    """Split raw list into individual entry strings."""
+    entries: list[str] = []
+    if not raw:
+        return entries
+
+    for line in raw.splitlines():
+        cleaned = line.strip()
+        if not cleaned or cleaned.startswith("#"):
+            continue
+
+        if " | " not in cleaned and cleaned.count("|") >= 1 and "-" in cleaned:
+            for chunk in cleaned.split("|"):
+                chunk = chunk.strip()
+                if chunk:
+                    entries.append(chunk)
+        else:
+            entries.append(cleaned)
+
+    if not entries and "|" in raw:
+        for chunk in raw.split("|"):
+            chunk = chunk.strip()
+            if chunk:
+                entries.append(chunk)
+
+    return entries
+
+
+def _parse_custom_date(date_str: str) -> tuple[int | None, int, int] | None:
+    """Parse date string into (year, month, day)."""
+    if not date_str:
+        return None
+
+    if "." in date_str:
+        parts = [p.strip() for p in date_str.split(".")]
+        if len(parts) != 2:
+            return None
+        day, month = parts
+        try:
+            day_i = int(day)
+            month_i = int(month)
+        except ValueError:
+            return None
+        return None, month_i, day_i
+
+    if date_str.count("-") == 2:
+        parts = [p.strip() for p in date_str.split("-")]
+        if len(parts[0]) == 4:
+            try:
+                year_i, month_i, day_i = (int(parts[0]), int(parts[1]), int(parts[2]))
+            except ValueError:
+                return None
+            return year_i, month_i, day_i
+
+    if date_str.count("-") == 1:
+        left, right = [p.strip() for p in date_str.split("-")]
+        try:
+            left_i, right_i = int(left), int(right)
+        except ValueError:
+            return None
+        if left_i > 12 and right_i <= 12:
+            return None, right_i, left_i
+        if right_i > 12 and left_i <= 12:
+            return None, left_i, right_i
+        return None, right_i, left_i
+
+    return None
+
+
+def _parse_custom_list(raw: str) -> list[dict[str, int | str | None]]:
+    """Parse custom events list into structured entries.
+
+    Supported formats per entry:
+      - DD.MM-Název or DD.MM | Název (recurring yearly)
+      - MM-DD | Název (recurring yearly)
+      - YYYY-MM-DD | Název (one-off)
+    """
+    events: list[dict[str, int | str | None]] = []
+    for entry in _iter_custom_entries(raw):
+        match = _CUSTOM_ENTRY_RE.match(entry)
+        if not match:
+            continue
+        date_part = match.group("date").strip()
+        name = match.group("name").strip()
+        parsed = _parse_custom_date(date_part)
+        if not parsed or not name:
+            continue
+        year, month, day = parsed
+        if not 1 <= month <= 12:
+            continue
+        if not 1 <= day <= 31:
+            continue
+        events.append({"year": year, "month": month, "day": day, "name": name})
+
+    return events
+
+
+def _get_custom_event_name(
+    check_date: date, events: list[dict[str, int | str | None]]
+) -> str | None:
+    """Get combined custom event name for a date."""
+    names: list[str] = []
+    for event in events:
+        event_year = event["year"]
+        if event_year is not None and event_year != check_date.year:
+            continue
+        if int(event["month"]) == check_date.month and int(event["day"]) == check_date.day:
+            names.append(str(event["name"]))
+
+    if not names:
+        return None
+    return ", ".join(names)
+
+
+def _get_next_custom_event(
+    from_date: date, events: list[dict[str, int | str | None]]
+) -> tuple[date | None, str | None]:
+    """Get next custom event from a date."""
+    current = from_date
+    end_date = from_date + timedelta(days=400)
+
+    while current <= end_date:
+        name = _get_custom_event_name(current, events)
+        if name:
+            return current, name
+        current += timedelta(days=1)
+
+    return None, None
 
 
 async def async_setup_entry(
@@ -94,9 +239,15 @@ async def async_setup_entry(
         # Next event sensors
         CZSKNextHolidaySensor(config_entry, country),
         CZSKNextVacationSensor(config_entry, country, region),
+    CZSKNextSpecialDaySensor(config_entry, country),
+    CZSKNextBirthdaySensor(config_entry, country),
+    CZSKNextFamilyHolidaySensor(config_entry, country),
         # Countdown sensors
         CZSKDaysToHolidaySensor(config_entry, country),
         CZSKDaysToVacationSensor(config_entry, country, region),
+    CZSKDaysToSpecialDaySensor(config_entry, country),
+    CZSKDaysToBirthdaySensor(config_entry, country),
+    CZSKDaysToFamilyHolidaySensor(config_entry, country),
         CZSKWorkdaysToWeekendSensor(config_entry, country),
         # School year sensor
         CZSKSchoolYearSensor(config_entry, country, region),
@@ -115,7 +266,33 @@ async def async_setup_entry(
 
 class CZSKBaseSensor(CZSKEntity, SensorEntity):
     """Base class for CZ/SK Calendar sensors."""
-    pass
+
+    def __init__(
+        self,
+        config_entry: ConfigEntry,
+        entity_type: str,
+        name: str,
+        icon: str,
+    ) -> None:
+        """Initialize the base sensor with custom events."""
+        super().__init__(config_entry, entity_type, name, icon)
+        options = self._config_entry.options
+        raw_birthdays = options.get(CONF_CUSTOM_BIRTHDAYS, "")
+        raw_holidays = options.get(CONF_CUSTOM_HOLIDAYS, "")
+        legacy_events = options.get(CONF_CUSTOM_EVENTS, "")
+
+        self._custom_birthdays = _parse_custom_list(raw_birthdays)
+        self._custom_holidays = _parse_custom_list(raw_holidays)
+        if legacy_events and not self._custom_holidays:
+            self._custom_holidays = _parse_custom_list(legacy_events)
+
+        reminder_days = options.get(CONF_REMINDER_DAYS, 3)
+        try:
+            reminder_days = int(reminder_days)
+        except (TypeError, ValueError):
+            reminder_days = 3
+        self._reminder_days = max(0, reminder_days)
+        self._reminder_daily = bool(options.get(CONF_REMINDER_DAILY, True))
 
 
 class CZSKBooleanSensor(CZSKBaseSensor):
@@ -301,6 +478,107 @@ class CZSKNextVacationSensor(CZSKBaseSensor):
         return attrs
 
 
+class CZSKNextSpecialDaySensor(CZSKBaseSensor):
+    """Sensor for next special day (includes custom events)."""
+
+    def __init__(self, config_entry: ConfigEntry, country: str) -> None:
+        """Initialize the next special day sensor."""
+        name = "Příští významný den" if country == COUNTRY_CZ else "Ďalší významný deň"
+        super().__init__(config_entry, "next_special_day", name, "mdi:calendar-star")
+
+    @property
+    def native_value(self) -> str:
+        """Return the name of the next special day."""
+        today = self.today
+        _, name = get_next_special_day(today + timedelta(days=1), self._country)
+        return name
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional attributes."""
+        attrs = super().extra_state_attributes.copy()
+        today = self.today
+        next_date, name = get_next_special_day(today + timedelta(days=1), self._country)
+        attrs["date"] = next_date.isoformat()
+        attrs["days_until"] = (next_date - today).days
+        attrs["name"] = name
+        return attrs
+
+
+class CZSKNextBirthdaySensor(CZSKBaseSensor):
+    """Sensor for next custom birthday."""
+
+    def __init__(self, config_entry: ConfigEntry, country: str) -> None:
+        """Initialize the next birthday sensor."""
+        name = "Příští narozeniny" if country == COUNTRY_CZ else "Ďalšie narodeniny"
+        super().__init__(config_entry, "next_birthday", name, "mdi:cake")
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the name of the next birthday."""
+        today = self.today
+        _, name = _get_next_custom_event(today + timedelta(days=1), self._custom_birthdays)
+        return name
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional attributes."""
+        attrs = super().extra_state_attributes.copy()
+        today = self.today
+        next_date, name = _get_next_custom_event(today + timedelta(days=1), self._custom_birthdays)
+        attrs["reminder_days"] = self._reminder_days
+        attrs["reminder_daily"] = self._reminder_daily
+
+        if next_date and name:
+            days_until = (next_date - today).days
+            in_window = 0 <= days_until <= self._reminder_days
+            should_notify = in_window if self._reminder_daily else days_until == self._reminder_days
+            attrs["date"] = next_date.isoformat()
+            attrs["days_until"] = days_until
+            attrs["name"] = name
+            attrs["in_reminder_window"] = in_window
+            attrs["should_notify"] = should_notify
+
+        return attrs
+
+
+class CZSKNextFamilyHolidaySensor(CZSKBaseSensor):
+    """Sensor for next custom family holiday."""
+
+    def __init__(self, config_entry: ConfigEntry, country: str) -> None:
+        """Initialize the next family holiday sensor."""
+        name = "Příští rodinný svátek" if country == COUNTRY_CZ else "Ďalší rodinný sviatok"
+        super().__init__(config_entry, "next_family_holiday", name, "mdi:party-popper")
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the name of the next family holiday."""
+        today = self.today
+        _, name = _get_next_custom_event(today + timedelta(days=1), self._custom_holidays)
+        return name
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional attributes."""
+        attrs = super().extra_state_attributes.copy()
+        today = self.today
+        next_date, name = _get_next_custom_event(today + timedelta(days=1), self._custom_holidays)
+        attrs["reminder_days"] = self._reminder_days
+        attrs["reminder_daily"] = self._reminder_daily
+
+        if next_date and name:
+            days_until = (next_date - today).days
+            in_window = 0 <= days_until <= self._reminder_days
+            should_notify = in_window if self._reminder_daily else days_until == self._reminder_days
+            attrs["date"] = next_date.isoformat()
+            attrs["days_until"] = days_until
+            attrs["name"] = name
+            attrs["in_reminder_window"] = in_window
+            attrs["should_notify"] = should_notify
+
+        return attrs
+
+
 class CZSKDaysToHolidaySensor(CZSKBaseSensor):
     """Sensor for days until next holiday."""
 
@@ -367,6 +645,131 @@ class CZSKDaysToVacationSensor(CZSKBaseSensor):
             attrs["next_vacation"] = name
             attrs["next_vacation_start"] = start.isoformat()
             attrs["next_vacation_end"] = end.isoformat()
+        return attrs
+
+
+class CZSKDaysToSpecialDaySensor(CZSKBaseSensor):
+    """Sensor for days until next special day (includes custom events)."""
+
+    _attr_native_unit_of_measurement = "days"
+
+    def __init__(self, config_entry: ConfigEntry, country: str) -> None:
+        """Initialize the days to special day sensor."""
+        name = "Dní do významného dne" if country == COUNTRY_CZ else "Dní do významného dňa"
+        super().__init__(config_entry, "days_to_special_day", name, "mdi:counter")
+
+    @property
+    def native_value(self) -> int:
+        """Return days until next special day."""
+        today = self.today
+        if get_special_day_name(today, self._country):
+            return 0
+        next_date, _ = get_next_special_day(today + timedelta(days=1), self._country)
+        return (next_date - today).days
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional attributes."""
+        attrs = super().extra_state_attributes.copy()
+        today = self.today
+        if get_special_day_name(today, self._country):
+            attrs["special_day_name"] = get_special_day_name(today, self._country)
+        else:
+            next_date, name = get_next_special_day(today + timedelta(days=1), self._country)
+            attrs["next_special_day"] = name
+            attrs["next_special_day_date"] = next_date.isoformat()
+        return attrs
+
+
+class CZSKDaysToBirthdaySensor(CZSKBaseSensor):
+    """Sensor for days until next custom birthday."""
+
+    _attr_native_unit_of_measurement = "days"
+
+    def __init__(self, config_entry: ConfigEntry, country: str) -> None:
+        """Initialize the days to birthday sensor."""
+        name = "Dní do narozenin" if country == COUNTRY_CZ else "Dní do narodenín"
+        super().__init__(config_entry, "days_to_birthday", name, "mdi:counter")
+
+    @property
+    def native_value(self) -> int | None:
+        """Return days until next birthday."""
+        today = self.today
+        if _get_custom_event_name(today, self._custom_birthdays):
+            return 0
+        next_date, _ = _get_next_custom_event(today + timedelta(days=1), self._custom_birthdays)
+        if not next_date:
+            return None
+        return (next_date - today).days
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional attributes."""
+        attrs = super().extra_state_attributes.copy()
+        today = self.today
+        attrs["reminder_days"] = self._reminder_days
+        attrs["reminder_daily"] = self._reminder_daily
+
+        if _get_custom_event_name(today, self._custom_birthdays):
+            attrs["birthday_name"] = _get_custom_event_name(today, self._custom_birthdays)
+            attrs["in_reminder_window"] = True
+            attrs["should_notify"] = True
+        else:
+            next_date, name = _get_next_custom_event(today + timedelta(days=1), self._custom_birthdays)
+            if next_date and name:
+                days_until = (next_date - today).days
+                in_window = 0 <= days_until <= self._reminder_days
+                should_notify = in_window if self._reminder_daily else days_until == self._reminder_days
+                attrs["next_birthday"] = name
+                attrs["next_birthday_date"] = next_date.isoformat()
+                attrs["in_reminder_window"] = in_window
+                attrs["should_notify"] = should_notify
+        return attrs
+
+
+class CZSKDaysToFamilyHolidaySensor(CZSKBaseSensor):
+    """Sensor for days until next custom family holiday."""
+
+    _attr_native_unit_of_measurement = "days"
+
+    def __init__(self, config_entry: ConfigEntry, country: str) -> None:
+        """Initialize the days to family holiday sensor."""
+        name = "Dní do rodinného svátku" if country == COUNTRY_CZ else "Dní do rodinného sviatku"
+        super().__init__(config_entry, "days_to_family_holiday", name, "mdi:counter")
+
+    @property
+    def native_value(self) -> int | None:
+        """Return days until next family holiday."""
+        today = self.today
+        if _get_custom_event_name(today, self._custom_holidays):
+            return 0
+        next_date, _ = _get_next_custom_event(today + timedelta(days=1), self._custom_holidays)
+        if not next_date:
+            return None
+        return (next_date - today).days
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional attributes."""
+        attrs = super().extra_state_attributes.copy()
+        today = self.today
+        attrs["reminder_days"] = self._reminder_days
+        attrs["reminder_daily"] = self._reminder_daily
+
+        if _get_custom_event_name(today, self._custom_holidays):
+            attrs["holiday_name"] = _get_custom_event_name(today, self._custom_holidays)
+            attrs["in_reminder_window"] = True
+            attrs["should_notify"] = True
+        else:
+            next_date, name = _get_next_custom_event(today + timedelta(days=1), self._custom_holidays)
+            if next_date and name:
+                days_until = (next_date - today).days
+                in_window = 0 <= days_until <= self._reminder_days
+                should_notify = in_window if self._reminder_daily else days_until == self._reminder_days
+                attrs["next_family_holiday"] = name
+                attrs["next_family_holiday_date"] = next_date.isoformat()
+                attrs["in_reminder_window"] = in_window
+                attrs["should_notify"] = should_notify
         return attrs
 
 

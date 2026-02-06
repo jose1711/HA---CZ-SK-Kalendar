@@ -4,6 +4,11 @@ from typing import Final
 DOMAIN: Final = "cz_sk_calendar"
 CONF_COUNTRY: Final = "country"
 CONF_REGION: Final = "region"
+CONF_CUSTOM_EVENTS: Final = "custom_events"
+CONF_CUSTOM_BIRTHDAYS: Final = "custom_birthdays"
+CONF_CUSTOM_HOLIDAYS: Final = "custom_holidays"
+CONF_REMINDER_DAYS: Final = "reminder_days"
+CONF_REMINDER_DAILY: Final = "reminder_daily"
 
 # Countries
 COUNTRY_CZ: Final = "CZ"

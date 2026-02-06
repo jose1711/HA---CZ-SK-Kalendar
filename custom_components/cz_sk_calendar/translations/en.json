@@ -24,8 +24,14 @@
     "step": {
       "init": {
         "title": "CZ/SK Calendar Options",
+        "description": "Optional lists: use DD.MM | Name (recurring yearly) or YYYY-MM-DD | Name (one-off). You can separate multiple items with | on one line.",
         "data": {
-          "region": "Region"
+          "region": "Region",
+          "custom_birthdays": "Custom birthdays",
+          "custom_holidays": "Custom holidays",
+          "reminder_days": "Reminder days in advance",
+          "reminder_daily": "Notify daily in window",
+          "custom_events": "Custom events (legacy)"
         }
       }
     }
@@ -47,17 +53,38 @@
       "holiday_name": {
         "name": "Holiday Name"
       },
+      "special_day": {
+        "name": "Special Day"
+      },
+      "next_birthday": {
+        "name": "Next Birthday"
+      },
+      "days_to_birthday": {
+        "name": "Days to Birthday"
+      },
+      "next_family_holiday": {
+        "name": "Next Family Holiday"
+      },
+      "days_to_family_holiday": {
+        "name": "Days to Family Holiday"
+      },
       "vacation_name": {
         "name": "Vacation Name"
       },
       "next_holiday": {
         "name": "Next Holiday"
       },
+      "next_special_day": {
+        "name": "Next Special Day"
+      },
       "next_vacation": {
         "name": "Next Vacation"
       },
       "days_to_holiday": {
         "name": "Days to Holiday"
+      },
+      "days_to_special_day": {
+        "name": "Days to Special Day"
       },
       "days_to_vacation": {
         "name": "Days to Vacation"

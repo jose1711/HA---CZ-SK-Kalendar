@@ -11,6 +11,11 @@ from homeassistant.core import callback
 from .const import (
     CONF_COUNTRY,
     CONF_REGION,
+    CONF_CUSTOM_EVENTS,
+    CONF_CUSTOM_BIRTHDAYS,
+    CONF_CUSTOM_HOLIDAYS,
+    CONF_REMINDER_DAYS,
+    CONF_REMINDER_DAILY,
     COUNTRY_CZ,
     COUNTRY_SK,
     CZ_REGIONS,
@@ -112,12 +117,23 @@ class CZSKCalendarOptionsFlow(ConfigFlow):
         country = self.config_entry.data.get(CONF_COUNTRY, COUNTRY_CZ)
         regions = CZ_REGIONS if country == COUNTRY_CZ else SK_REGIONS
         current_region = self.config_entry.data.get(CONF_REGION)
+        current_birthdays = self.config_entry.options.get(CONF_CUSTOM_BIRTHDAYS, "")
+        current_holidays = self.config_entry.options.get(CONF_CUSTOM_HOLIDAYS, "")
+        current_reminder_days = self.config_entry.options.get(CONF_REMINDER_DAYS, 3)
+        current_reminder_daily = self.config_entry.options.get(CONF_REMINDER_DAILY, True)
 
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_REGION, default=current_region): vol.In(regions),
+                    vol.Optional(CONF_CUSTOM_BIRTHDAYS, default=current_birthdays): str,
+                    vol.Optional(CONF_CUSTOM_HOLIDAYS, default=current_holidays): str,
+                    vol.Optional(
+                        CONF_REMINDER_DAYS,
+                        default=current_reminder_days,
+                    ): vol.All(vol.Coerce(int), vol.Range(min=0, max=365)),
+                    vol.Optional(CONF_REMINDER_DAILY, default=current_reminder_daily): bool,
                 }
             ),
         )

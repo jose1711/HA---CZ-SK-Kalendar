@@ -76,6 +76,27 @@ Jarní prázdniny na Slovensku trvají jeden týden a jsou rozděleny do 3 turnu
 4. Vyberte zemi (Česká republika / Slovensko)
 5. Vyberte váš **okres** (CZ) nebo **kraj** (SK) pro správné jarní prázdniny
 
+### Vlastní seznamy: narozeniny a rodinné svátky
+V nastavení integrace (Možnosti) můžete zadat **seznam narozenin** a **seznam rodinných svátků**.
+Každá položka musí mít datum.
+
+Formát (jeden záznam na řádek, nebo oddělený znakem `|` na jednom řádku):
+- `DD.MM | Název` (opakované každý rok)
+- `YYYY-MM-DD | Název` (jednorázově)
+
+Příklad:
+```
+03.02 | Narozeniny máma
+07.08 | Narozeniny táta
+08.09 | Narozeniny babička
+2026-11-15 | Výročí svatby
+```
+
+### Nastavení připomínek
+V možnostech integrace nastavíte:
+- **Kolik dní předem připomínat** (`reminder_days`)
+- **Připomínat denně v okně** (`reminder_daily`) – pokud je zapnuto, dostanete upozornění každý den v okně, jinak pouze jednou v den „X dní před“
+
 ## Vytvořené entity
 
 ### Senzory (binary_sensor pattern)
@@ -88,10 +109,37 @@ Jarní prázdniny na Slovensku trvají jeden týden a jsou rozděleny do 3 turnu
 | `sensor.vacation` | Jsou dnes prázdniny? | `True` / `False` |
 | `sensor.holiday_name` | Název dnešního svátku | text nebo `None` |
 | `sensor.vacation_name` | Název aktuálních prázdnin | text nebo `None` |
+| `sensor.special_day` | Název dnešního významného dne | text nebo `None` |
+| `sensor.next_birthday` | Název příštích narozenin | text nebo `None` |
+| `sensor.days_to_birthday` | Dní do příštích narozenin | číslo nebo `None` |
+| `sensor.next_family_holiday` | Název příštího rodinného svátku | text nebo `None` |
+| `sensor.days_to_family_holiday` | Dní do příštího rodinného svátku | číslo nebo `None` |
 | `sensor.next_holiday` | Název příštího svátku | text |
+| `sensor.next_special_day` | Název příštího významného dne | text |
 | `sensor.next_vacation` | Název příštích prázdnin | text |
 | `sensor.days_to_holiday` | Dní do příštího svátku | číslo |
+| `sensor.days_to_special_day` | Dní do příštího významného dne | číslo |
 | `sensor.days_to_vacation` | Dní do příštích prázdnin | číslo |
+
+### Příklad automatizace: narozeniny 3 dny dopředu
+```yaml
+automation:
+  - alias: "Narozeniny za 3 dny"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.days_to_birthday
+        below: 4
+    condition:
+      - condition: template
+        value_template: >
+          {{ state_attr('sensor.days_to_birthday', 'should_notify') }}
+    action:
+      - service: notify.mobile_app
+        data:
+          title: "Blíží se narozeniny"
+          message: >
+            {{ state_attr('sensor.days_to_birthday', 'next_birthday') }}
+```
 
 ### Kalendáře
 
