@@ -45,9 +45,21 @@ _CUSTOM_ENTRY_RE = re.compile(
     r"^\s*(?P<date>(\d{4}-\d{1,2}-\d{1,2})|(\d{1,2}[.-]\d{1,2})|(\d{1,2}-\d{1,2}))\s*[-|;]\s*(?P<name>.+)$"
 )
 
+_DATE_ONLY_RE = re.compile(
+    r"^\s*(\d{4}-\d{1,2}-\d{1,2}|\d{1,2}[.-]\d{1,2}|\d{1,2}-\d{1,2})\s*$"
+)
+
 
 def _iter_custom_entries(raw: str) -> list[str]:
-    """Split raw list into individual entry strings."""
+    """Split raw list into individual entry strings.
+
+    Handles multiple formats:
+      - One entry per line: ``03.02 | Narozeniny máma``
+      - Multiple entries on one line separated by ``|``:
+        ``03.02 | Narozeniny máma | 07.08 | Narozeniny táta``
+      - Entries using ``-`` or ``;`` as date-name separator:
+        ``03.02-Narozeniny máma | 07.08-Narozeniny táta``
+    """
     entries: list[str] = []
     if not raw:
         return entries
@@ -57,19 +69,27 @@ def _iter_custom_entries(raw: str) -> list[str]:
         if not cleaned or cleaned.startswith("#"):
             continue
 
-        if " | " not in cleaned and cleaned.count("|") >= 1 and "-" in cleaned:
-            for chunk in cleaned.split("|"):
-                chunk = chunk.strip()
-                if chunk:
-                    entries.append(chunk)
-        else:
+        if "|" not in cleaned:
             entries.append(cleaned)
+            continue
 
-    if not entries and "|" in raw:
-        for chunk in raw.split("|"):
-            chunk = chunk.strip()
-            if chunk:
-                entries.append(chunk)
+        # Split by | and reassemble date-name pairs
+        parts = [p.strip() for p in cleaned.split("|")]
+        i = 0
+        while i < len(parts):
+            part = parts[i]
+            if not part:
+                i += 1
+                continue
+
+            # If this part is a standalone date, combine with next part as name
+            if _DATE_ONLY_RE.match(part) and i + 1 < len(parts) and parts[i + 1].strip():
+                entries.append(f"{part} | {parts[i + 1].strip()}")
+                i += 2
+            else:
+                # Already a complete entry (uses - or ; as date-name separator)
+                entries.append(part)
+                i += 1
 
     return entries
 
