@@ -85,14 +85,6 @@ Formát (jeden záznam na řádek, nebo více záznamů oddělených znakem `|` 
 - `YYYY-MM-DD | Název` (jednorázově)
 - Jako oddělovač data a názvu lze použít i `-` nebo `;`
 
-Příklad — každý záznam na vlastním řádku:
-```
-03.02 | Narozeniny máma
-07.08 | Narozeniny táta
-08.09 | Narozeniny babička
-2026-11-15 | Výročí svatby
-```
-
 Příklad — více záznamů na jednom řádku oddělených `|`:
 ```
 03.02 | Narozeniny máma | 07.08 | Narozeniny táta | 08.09 | Narozeniny babička
