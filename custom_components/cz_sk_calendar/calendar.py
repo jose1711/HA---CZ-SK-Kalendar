@@ -11,7 +11,17 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
-from .const import CONF_COUNTRY, CONF_REGION, COUNTRY_CZ, DOMAIN, CZ_REGIONS, SK_REGIONS
+from .const import (
+    CONF_COUNTRY,
+    CONF_REGION,
+    CONF_CUSTOM_BIRTHDAYS,
+    CONF_CUSTOM_HOLIDAYS,
+    CONF_CUSTOM_EVENTS,
+    COUNTRY_CZ,
+    DOMAIN,
+    CZ_REGIONS,
+    SK_REGIONS,
+)
 from .core import (
     get_all_holidays,
     get_all_vacations,
@@ -21,6 +31,7 @@ from .core import (
     is_holiday,
     is_vacation,
 )
+from .sensor import _parse_custom_list, _get_custom_event_name, _get_next_custom_event
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -38,6 +49,7 @@ async def async_setup_entry(
         CZSKHolidayCalendar(config_entry, country, region),
         CZSKVacationCalendar(config_entry, country, region),
         CZSKCombinedCalendar(config_entry, country, region),
+        CZSKCustomEventsCalendar(config_entry, country, region),
     ]
 
     async_add_entities(calendars, True)
@@ -394,4 +406,96 @@ class CZSKCombinedCalendar(CZSKBaseCalendar):
 
         # Sort by start date
         events.sort(key=lambda x: x.start)
+        return events
+
+
+class CZSKCustomEventsCalendar(CZSKBaseCalendar):
+    """Calendar for custom events (birthdays & family holidays)."""
+
+    def __init__(
+        self, config_entry: ConfigEntry, country: str, region: str
+    ) -> None:
+        """Initialize the custom events calendar."""
+        name = "Vlastní události" if country == COUNTRY_CZ else "Vlastné udalosti"
+        super().__init__(config_entry, country, region, "custom_events", name)
+        self._config_entry = config_entry
+
+    def _get_all_custom_events(self) -> list[dict]:
+        """Parse and return all custom events from config."""
+        options = self._config_entry.options
+        raw_birthdays = options.get(CONF_CUSTOM_BIRTHDAYS, "")
+        raw_holidays = options.get(CONF_CUSTOM_HOLIDAYS, "")
+        legacy_events = options.get(CONF_CUSTOM_EVENTS, "")
+
+        events = _parse_custom_list(raw_birthdays)
+        holidays = _parse_custom_list(raw_holidays)
+        if legacy_events and not holidays:
+            holidays = _parse_custom_list(legacy_events)
+
+        # Tag events with type for emoji display
+        for e in events:
+            e["type"] = "birthday"
+        for e in holidays:
+            e["type"] = "holiday"
+
+        return events + holidays
+
+    @property
+    def event(self) -> CalendarEvent | None:
+        """Return the current or next upcoming event."""
+        today = date.today()
+        all_events = self._get_all_custom_events()
+
+        if not all_events:
+            return None
+
+        # Check today
+        name = _get_custom_event_name(today, all_events)
+        if name:
+            return CalendarEvent(
+                start=today,
+                end=today + timedelta(days=1),
+                summary=name,
+            )
+
+        # Find next custom event
+        next_date, next_name = _get_next_custom_event(today + timedelta(days=1), all_events)
+        if next_date and next_name:
+            return CalendarEvent(
+                start=next_date,
+                end=next_date + timedelta(days=1),
+                summary=next_name,
+            )
+
+        return None
+
+    async def async_get_events(
+        self,
+        hass: HomeAssistant,
+        start_date: datetime,
+        end_date: datetime,
+    ) -> list[CalendarEvent]:
+        """Return calendar events within a datetime range."""
+        events = []
+        all_custom = self._get_all_custom_events()
+
+        if not all_custom:
+            return events
+
+        start = start_date.date() if isinstance(start_date, datetime) else start_date
+        end = end_date.date() if isinstance(end_date, datetime) else end_date
+
+        current = start
+        while current <= end:
+            name = _get_custom_event_name(current, all_custom)
+            if name:
+                events.append(
+                    CalendarEvent(
+                        start=current,
+                        end=current + timedelta(days=1),
+                        summary=name,
+                    )
+                )
+            current += timedelta(days=1)
+
         return events
