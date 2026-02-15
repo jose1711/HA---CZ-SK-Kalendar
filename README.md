@@ -80,17 +80,30 @@ Jarní prázdniny na Slovensku trvají jeden týden a jsou rozděleny do 3 turnu
 V nastavení integrace (Možnosti) můžete zadat **seznam narozenin** a **seznam rodinných svátků**.
 Každá položka musí mít datum.
 
-Formát (jeden záznam na řádek, nebo oddělený znakem `|` na jednom řádku):
+Formát (jeden záznam na řádek, nebo více záznamů oddělených znakem `|` na jednom řádku):
 - `DD.MM | Název` (opakované každý rok)
 - `YYYY-MM-DD | Název` (jednorázově)
+- Jako oddělovač data a názvu lze použít i `-` nebo `;`
 
-Příklad:
+Příklad — každý záznam na vlastním řádku:
 ```
 03.02 | Narozeniny máma
 07.08 | Narozeniny táta
 08.09 | Narozeniny babička
 2026-11-15 | Výročí svatby
 ```
+
+Příklad — více záznamů na jednom řádku oddělených `|`:
+```
+03.02 | Narozeniny máma | 07.08 | Narozeniny táta | 08.09 | Narozeniny babička
+```
+
+Lze i kombinovat formáty a míchat `DD.MM` s `YYYY-MM-DD`:
+```
+03.02 | Narozeniny máma | 2026-11-15 | Výročí svatby
+```
+
+Vlastní události se zobrazují jak v **senzorech** (next_birthday, days_to_birthday atd.), tak v **kalendáři** (entita "Vlastní události").
 
 ### Nastavení připomínek
 V možnostech integrace nastavíte:
@@ -148,6 +161,7 @@ automation:
 | `calendar.svatky` | Pouze státní svátky |
 | `calendar.skolni_prazdniny` | Pouze školní prázdniny |
 | `calendar.svatky_a_prazdniny` | Kombinovaný kalendář |
+| `calendar.vlastni_udalosti` | Narozeniny a rodinné svátky |
 
 ## Příklady automatizací
 
