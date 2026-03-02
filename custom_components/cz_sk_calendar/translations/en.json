@@ -62,11 +62,17 @@
       "days_to_birthday": {
         "name": "Days to Birthday"
       },
+      "today_birthday": {
+        "name": "Today's Birthday"
+      },
       "next_family_holiday": {
         "name": "Next Family Holiday"
       },
       "days_to_family_holiday": {
         "name": "Days to Family Holiday"
+      },
+      "today_family_holiday": {
+        "name": "Today's Family Holiday"
       },
       "vacation_name": {
         "name": "Vacation Name"

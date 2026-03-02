@@ -262,6 +262,9 @@ async def async_setup_entry(
     CZSKNextSpecialDaySensor(config_entry, country),
     CZSKNextBirthdaySensor(config_entry, country),
     CZSKNextFamilyHolidaySensor(config_entry, country),
+        # Today's custom event sensors
+        CZSKTodayBirthdaySensor(config_entry, country),
+        CZSKTodayFamilyHolidaySensor(config_entry, country),
         # Countdown sensors
         CZSKDaysToHolidaySensor(config_entry, country),
         CZSKDaysToVacationSensor(config_entry, country, region),
@@ -596,6 +599,54 @@ class CZSKNextFamilyHolidaySensor(CZSKBaseSensor):
             attrs["in_reminder_window"] = in_window
             attrs["should_notify"] = should_notify
 
+        return attrs
+
+
+class CZSKTodayBirthdaySensor(CZSKBaseSensor):
+    """Sensor for today's birthday from custom birthday list."""
+
+    def __init__(self, config_entry: ConfigEntry, country: str) -> None:
+        """Initialize the today's birthday sensor."""
+        name = "Dnešní narozeniny" if country == COUNTRY_CZ else "Dnešné narodeniny"
+        super().__init__(config_entry, "today_birthday", name, "mdi:cake-variant")
+
+    @property
+    def native_value(self) -> str | None:
+        """Return today's birthday name or None."""
+        return _get_custom_event_name(self.today, self._custom_birthdays)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional attributes."""
+        attrs = super().extra_state_attributes.copy()
+        name = _get_custom_event_name(self.today, self._custom_birthdays)
+        attrs["has_birthday"] = name is not None
+        if name:
+            attrs["name"] = name
+        return attrs
+
+
+class CZSKTodayFamilyHolidaySensor(CZSKBaseSensor):
+    """Sensor for today's family holiday from custom holiday list."""
+
+    def __init__(self, config_entry: ConfigEntry, country: str) -> None:
+        """Initialize the today's family holiday sensor."""
+        name = "Dnešní rodinný svátek" if country == COUNTRY_CZ else "Dnešný rodinný sviatok"
+        super().__init__(config_entry, "today_family_holiday", name, "mdi:party-popper")
+
+    @property
+    def native_value(self) -> str | None:
+        """Return today's family holiday name or None."""
+        return _get_custom_event_name(self.today, self._custom_holidays)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional attributes."""
+        attrs = super().extra_state_attributes.copy()
+        name = _get_custom_event_name(self.today, self._custom_holidays)
+        attrs["has_holiday"] = name is not None
+        if name:
+            attrs["name"] = name
         return attrs
 
 
