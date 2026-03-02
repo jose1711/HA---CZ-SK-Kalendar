@@ -62,11 +62,17 @@
       "days_to_birthday": {
         "name": "Dní do narozenin"
       },
+      "today_birthday": {
+        "name": "Dnešní narozeniny"
+      },
       "next_family_holiday": {
         "name": "Příští rodinný svátek"
       },
       "days_to_family_holiday": {
         "name": "Dní do rodinného svátku"
+      },
+      "today_family_holiday": {
+        "name": "Dnešní rodinný svátek"
       },
       "vacation_name": {
         "name": "Název prázdnin"
