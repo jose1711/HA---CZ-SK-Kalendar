@@ -94,6 +94,12 @@
       },
       "days_to_vacation": {
         "name": "Days to Vacation"
+      },
+      "today_day_name": {
+        "name": "Today's Day"
+      },
+      "tomorrow_day_name": {
+        "name": "Tomorrow's Day"
       }
     },
     "calendar": {
