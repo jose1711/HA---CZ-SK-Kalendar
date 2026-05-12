@@ -94,6 +94,12 @@
       },
       "days_to_vacation": {
         "name": "Dní do prázdnin"
+      },
+      "today_day_name": {
+        "name": "Dnešný deň"
+      },
+      "tomorrow_day_name": {
+        "name": "Zajtrajší deň"
       }
     },
     "calendar": {

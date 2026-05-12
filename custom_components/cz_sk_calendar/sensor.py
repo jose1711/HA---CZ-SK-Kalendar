@@ -262,6 +262,9 @@ async def async_setup_entry(
     CZSKNextSpecialDaySensor(config_entry, country),
     CZSKNextBirthdaySensor(config_entry, country),
     CZSKNextFamilyHolidaySensor(config_entry, country),
+        # Day name sensors
+        CZSKTodayDayNameSensor(config_entry, country),
+        CZSKTomorrowDayNameSensor(config_entry, country),
         # Today's custom event sensors
         CZSKTodayBirthdaySensor(config_entry, country),
         CZSKTodayFamilyHolidaySensor(config_entry, country),
@@ -599,6 +602,57 @@ class CZSKNextFamilyHolidaySensor(CZSKBaseSensor):
             attrs["in_reminder_window"] = in_window
             attrs["should_notify"] = should_notify
 
+        return attrs
+
+
+_CZ_DAY_NAMES = [
+    "Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle"
+]
+_SK_DAY_NAMES = [
+    "Pondelok", "Utorok", "Streda", "Štvrtok", "Piatok", "Sobota", "Nedeľa"
+]
+
+
+class CZSKTodayDayNameSensor(CZSKBaseSensor):
+    """Sensor returning the name of today's day of the week."""
+
+    def __init__(self, config_entry: ConfigEntry, country: str) -> None:
+        name = "Dnešní den" if country == COUNTRY_CZ else "Dnešný deň"
+        super().__init__(config_entry, "today_day_name", name, "mdi:calendar-today")
+
+    @property
+    def native_value(self) -> str:
+        weekday = self.today.weekday()
+        return _CZ_DAY_NAMES[weekday] if self._country == COUNTRY_CZ else _SK_DAY_NAMES[weekday]
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        attrs = super().extra_state_attributes.copy()
+        today = self.today
+        attrs["date"] = today.isoformat()
+        attrs["weekday_number"] = today.weekday()
+        return attrs
+
+
+class CZSKTomorrowDayNameSensor(CZSKBaseSensor):
+    """Sensor returning the name of tomorrow's day of the week."""
+
+    def __init__(self, config_entry: ConfigEntry, country: str) -> None:
+        name = "Zítřejší den" if country == COUNTRY_CZ else "Zajtrajší deň"
+        super().__init__(config_entry, "tomorrow_day_name", name, "mdi:calendar-arrow-right")
+
+    @property
+    def native_value(self) -> str:
+        tomorrow = self.today + timedelta(days=1)
+        weekday = tomorrow.weekday()
+        return _CZ_DAY_NAMES[weekday] if self._country == COUNTRY_CZ else _SK_DAY_NAMES[weekday]
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        attrs = super().extra_state_attributes.copy()
+        tomorrow = self.today + timedelta(days=1)
+        attrs["date"] = tomorrow.isoformat()
+        attrs["weekday_number"] = tomorrow.weekday()
         return attrs
 
 
