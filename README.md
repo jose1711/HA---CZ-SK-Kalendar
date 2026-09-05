@@ -142,6 +142,11 @@ obsahuje všechna, oddělená čárkou. Jednotlivá jména najdete i v atributec
 | `date` | Datum, ke kterému se senzor vztahuje |
 | `offset_days` | 0 = dnes, 1 = zítra, 2 = pozítří |
 
+Kromě senzorů jsou jmeniny dostupné i jako samostatný kalendář
+(`calendar.jmeniny`, na Slovensku „Meniny“) – obsahuje událost pro každý den
+v roce s názvem daného dne. Kombinovaný kalendář svátků a prázdnin zůstává beze
+změny, aby ho jmeniny nezaplnily.
+
 ```yaml
 # Všechna jména zítřejšího dne
 {{ states('sensor.nameday_tomorrow') }}
@@ -178,6 +183,7 @@ automation:
 | `calendar.skolni_prazdniny` | Pouze školní prázdniny |
 | `calendar.svatky_a_prazdniny` | Kombinovaný kalendář |
 | `calendar.vlastni_udalosti` | Narozeniny a rodinné svátky |
+| `calendar.jmeniny` | Jmeniny / meniny – událost na každý den v roce |
 
 ## Příklady automatizací
 
