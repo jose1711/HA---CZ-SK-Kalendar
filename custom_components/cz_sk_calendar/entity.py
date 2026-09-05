@@ -8,6 +8,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import async_track_time_change
+from homeassistant.util import dt as dt_util
 
 from .const import (
     CONF_COUNTRY,
@@ -17,6 +18,27 @@ from .const import (
     SK_REGIONS,
     COUNTRY_CZ,
 )
+
+
+def get_configured_country(config_entry: ConfigEntry) -> str:
+    """Return the configured country for a config entry.
+
+    The country is chosen once during setup and cannot be changed later,
+    so it always lives in ``entry.data``.
+    """
+    return config_entry.data[CONF_COUNTRY]
+
+
+def get_configured_region(config_entry: ConfigEntry) -> str:
+    """Return the currently configured region for a config entry.
+
+    The region can be changed from the options flow, which stores it in
+    ``entry.options``. Fall back to the value picked during initial setup
+    for entries that were never reconfigured.
+    """
+    return config_entry.options.get(
+        CONF_REGION, config_entry.data[CONF_REGION]
+    )
 
 
 class CZSKEntity(Entity):
@@ -47,8 +69,8 @@ class CZSKEntity(Entity):
             icon: MDI icon name
         """
         self._config_entry = config_entry
-        self._country = config_entry.data[CONF_COUNTRY]
-        self._region = config_entry.data[CONF_REGION]
+        self._country = get_configured_country(config_entry)
+        self._region = get_configured_region(config_entry)
         self._entity_type = entity_type
 
         self._region_name = (
@@ -60,6 +82,18 @@ class CZSKEntity(Entity):
         self._attr_unique_id = f"{config_entry.entry_id}_{entity_type}"
         self._attr_name = name
         self._attr_icon = icon
+
+    @property
+    def suggested_object_id(self) -> str:
+        """Return a stable, language-independent object id.
+
+        Display names are localized (CZ/SK), so deriving the entity id from
+        the name would give Czech and Slovak installations different ids.
+        Basing it on the entity type keeps ``sensor.workday`` the same
+        everywhere and matches the entity table in the README. Only new
+        entities are affected; already registered ones keep their id.
+        """
+        return self._entity_type.removeprefix("binary_")
 
     @property
     def device_info(self) -> dict[str, Any]:
@@ -111,5 +145,5 @@ class CZSKEntity(Entity):
 
     @property
     def today(self) -> date:
-        """Get today's date (convenience property)."""
-        return date.today()
+        """Get today's date in Home Assistant's configured timezone."""
+        return dt_util.now().date()

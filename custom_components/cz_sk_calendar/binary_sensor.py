@@ -12,8 +12,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import CONF_COUNTRY, CONF_REGION, COUNTRY_CZ
-from .entity import CZSKEntity
+from .const import COUNTRY_CZ
+from .entity import CZSKEntity, get_configured_country
 from .core import (
     get_holiday_name,
     get_special_day_name,
@@ -31,7 +31,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the CZ/SK Calendar binary sensors."""
-    country = config_entry.data[CONF_COUNTRY]
+    country = get_configured_country(config_entry)
 
     sensors = [
         CZSKBinarySensor(
@@ -41,7 +41,6 @@ async def async_setup_entry(
             "mdi:briefcase",
             "mdi:briefcase-off",
             lambda e: is_workday(e.today, e._country),
-            BinarySensorDeviceClass.OCCUPANCY,
         ),
         CZSKBinarySensor(
             config_entry,

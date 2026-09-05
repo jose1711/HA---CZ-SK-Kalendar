@@ -104,7 +104,14 @@ V možnostech integrace nastavíte:
 
 ## Vytvořené entity
 
-### Senzory (binary_sensor pattern)
+> **Pozn. k ID entit:** zobrazovaná jména jsou česká/slovenská podle zvolené
+> země, ale `entity_id` je záměrně anglické a stejné pro CZ i SK – jinak by
+> každá instalace měla jiná ID. Pokud jste integraci používali před verzí
+> 1.1.0, vaše entity si ponechají původní ID odvozená z názvu
+> (např. `sensor.pracovni_den`); přejmenovat je můžete v *Nastavení →
+> Zařízení a služby → Entity*.
+
+### Senzory
 
 | Senzor | Popis | Hodnota |
 |--------|-------|---------|
@@ -128,6 +135,29 @@ V možnostech integrace nastavíte:
 | `sensor.nameday` | Jmeniny / meniny dneška | text nebo `None` |
 | `sensor.nameday_tomorrow` | Jmeniny / meniny zítřka | text nebo `None` |
 | `sensor.nameday_day_after_tomorrow` | Jmeniny / meniny pozítřka | text nebo `None` |
+| `sensor.today_day_name` | Název dnešního dne v týdnu | text |
+| `sensor.tomorrow_day_name` | Název zítřejšího dne v týdnu | text |
+| `sensor.today_birthday` | Dnešní narozeniny | text nebo `None` |
+| `sensor.today_family_holiday` | Dnešní rodinný svátek | text nebo `None` |
+| `sensor.workdays_to_weekend` | Pracovních dní do víkendu | číslo |
+| `sensor.school_year` | Aktuální školní rok | text, např. `2026/2027` |
+| `sensor.workdays_in_month` | Počet pracovních dní v měsíci | číslo |
+| `sensor.school_days_in_month` | Počet školních dní v měsíci | číslo |
+| `sensor.vacation_remaining` | Zbývá dní aktuálních prázdnin | číslo |
+
+### Binární senzory
+
+Stejné informace jsou dostupné i jako `binary_sensor` s hodnotami `on` / `off`,
+což se lépe používá v podmínkách automatizací:
+
+| Entita | Popis |
+|--------|-------|
+| `binary_sensor.workday` | Je dnes pracovní den? |
+| `binary_sensor.school_day` | Je dnes školní den? |
+| `binary_sensor.holiday` | Je dnes svátek? |
+| `binary_sensor.vacation` | Jsou dnes prázdniny? |
+| `binary_sensor.weekend` | Je dnes víkend? |
+| `binary_sensor.special_day` | Je dnes významný den? |
 
 ### Jmeniny / meniny
 
@@ -143,7 +173,7 @@ obsahuje všechna, oddělená čárkou. Jednotlivá jména najdete i v atributec
 | `offset_days` | 0 = dnes, 1 = zítra, 2 = pozítří |
 
 Kromě senzorů jsou jmeniny dostupné i jako samostatný kalendář
-(`calendar.jmeniny`, na Slovensku „Meniny“) – obsahuje událost pro každý den
+(`calendar.namedays`, zobrazený jako „Jmeniny“ / „Meniny“) – obsahuje událost pro každý den
 v roce s názvem daného dne. Kombinovaný kalendář svátků a prázdnin zůstává beze
 změny, aby ho jmeniny nezaplnily.
 
@@ -207,11 +237,11 @@ automation:
 
 | Kalendář | Popis |
 |----------|-------|
-| `calendar.svatky` | Pouze státní svátky |
-| `calendar.skolni_prazdniny` | Pouze školní prázdniny |
-| `calendar.svatky_a_prazdniny` | Kombinovaný kalendář |
-| `calendar.vlastni_udalosti` | Narozeniny a rodinné svátky |
-| `calendar.jmeniny` | Jmeniny / meniny – událost na každý den v roce |
+| `calendar.holidays` | Pouze státní svátky |
+| `calendar.vacations` | Pouze školní prázdniny |
+| `calendar.combined` | Kombinovaný kalendář |
+| `calendar.custom_events` | Narozeniny a rodinné svátky |
+| `calendar.namedays` | Jmeniny / meniny – událost na každý den v roce |
 
 ## Příklady automatizací
 
@@ -224,8 +254,8 @@ automation:
         at: "06:30:00"
     condition:
       - condition: state
-        entity_id: sensor.cz_sk_calendar_school_day
-        state: "True"
+        entity_id: binary_sensor.school_day
+        state: "on"
     action:
       - service: media_player.play_media
         target:
@@ -241,15 +271,15 @@ automation:
   - alias: "Oznámení o prázdninách"
     trigger:
       - platform: numeric_state
-        entity_id: sensor.cz_sk_calendar_days_to_vacation
+        entity_id: sensor.days_to_vacation
         below: 8
     action:
       - service: notify.mobile_app
         data:
           title: "Prázdniny se blíží!"
           message: >
-            Za {{ states('sensor.cz_sk_calendar_days_to_vacation') }} dní začínají
-            {{ state_attr('sensor.cz_sk_calendar_next_vacation', 'friendly_name') }}
+            Za {{ states('sensor.days_to_vacation') }} dní začínají
+            {{ state_attr('sensor.next_vacation', 'friendly_name') }}
 ```
 
 ### Jiný režim topení o prázdninách
@@ -258,8 +288,8 @@ automation:
   - alias: "Prázdninový režim topení"
     trigger:
       - platform: state
-        entity_id: sensor.cz_sk_calendar_vacation
-        to: "True"
+        entity_id: binary_sensor.vacation
+        to: "on"
     action:
       - service: climate.set_preset_mode
         target:
