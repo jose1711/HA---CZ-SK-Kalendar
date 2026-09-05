@@ -174,6 +174,10 @@ names: ["Josef"]
 
 Lze zavolat i ve skriptu/automatizaci a výsledek dál zpracovat pomocí `response_variable`.
 
+Hotový příklad skriptu, který takto zjistí jmeniny/meniny na celý týden dopředu
+(7x zavolá službu a výsledky spojí do jedné notifikace), najdete v
+[`examples/meniny_na_tyzden.yaml`](examples/meniny_na_tyzden.yaml).
+
 ### Příklad automatizace: narozeniny 3 dny dopředu
 ```yaml
 automation:
