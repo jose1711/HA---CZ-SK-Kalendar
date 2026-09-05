@@ -26,6 +26,7 @@ from .core import (
     get_all_holidays,
     get_all_vacations,
     get_holiday_name,
+    get_nameday,
     get_school_year,
     get_vacation_name,
     is_holiday,
@@ -50,6 +51,7 @@ async def async_setup_entry(
         CZSKVacationCalendar(config_entry, country, region),
         CZSKCombinedCalendar(config_entry, country, region),
         CZSKCustomEventsCalendar(config_entry, country, region),
+        CZSKNamedayCalendar(config_entry, country, region),
     ]
 
     async_add_entities(calendars, True)
@@ -494,6 +496,61 @@ class CZSKCustomEventsCalendar(CZSKBaseCalendar):
                         start=current,
                         end=current + timedelta(days=1),
                         summary=name,
+                    )
+                )
+            current += timedelta(days=1)
+
+        return events
+
+
+class CZSKNamedayCalendar(CZSKBaseCalendar):
+    """Calendar for name days (jmeniny / meniny)."""
+
+    def __init__(
+        self, config_entry: ConfigEntry, country: str, region: str
+    ) -> None:
+        """Initialize the nameday calendar."""
+        name = "Jmeniny" if country == COUNTRY_CZ else "Meniny"
+        super().__init__(config_entry, country, region, "namedays", name)
+
+    @property
+    def event(self) -> CalendarEvent | None:
+        """Return today's nameday, or the next day that carries one."""
+        today = date.today()
+
+        for offset in range(366):
+            current = today + timedelta(days=offset)
+            nameday = get_nameday(current, self._country)
+            if nameday:
+                return CalendarEvent(
+                    start=current,
+                    end=current + timedelta(days=1),
+                    summary=nameday,
+                )
+
+        return None
+
+    async def async_get_events(
+        self,
+        hass: HomeAssistant,
+        start_date: datetime,
+        end_date: datetime,
+    ) -> list[CalendarEvent]:
+        """Return calendar events within a datetime range."""
+        events = []
+
+        start = start_date.date() if isinstance(start_date, datetime) else start_date
+        end = end_date.date() if isinstance(end_date, datetime) else end_date
+
+        current = start
+        while current <= end:
+            nameday = get_nameday(current, self._country)
+            if nameday:
+                events.append(
+                    CalendarEvent(
+                        start=current,
+                        end=current + timedelta(days=1),
+                        summary=nameday,
                     )
                 )
             current += timedelta(days=1)
