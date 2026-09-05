@@ -113,5 +113,21 @@
         "name": "Holidays & Vacations"
       }
     }
+  },
+  "services": {
+    "get_nameday": {
+      "name": "Get name day for date",
+      "description": "Returns the name(s) celebrating their name day on a given date.",
+      "fields": {
+        "date": {
+          "name": "Date",
+          "description": "Date in YYYY-MM-DD format to look up."
+        },
+        "country": {
+          "name": "Country",
+          "description": "CZ or SK. If not set, the country of the first configured integration is used."
+        }
+      }
+    }
   }
 }

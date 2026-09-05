@@ -2,17 +2,73 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from typing import Any
 
+import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, ServiceCall, SupportsResponse
+from homeassistant.exceptions import ServiceValidationError
+from homeassistant.helpers import config_validation as cv
 
-from .const import DOMAIN
+from .const import CONF_COUNTRY, COUNTRY_CZ, COUNTRY_SK, DOMAIN
+from .core import get_nameday, get_nameday_names
 
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.CALENDAR]
+
+SERVICE_GET_NAMEDAY = "get_nameday"
+
+_GET_NAMEDAY_SCHEMA = vol.Schema(
+    {
+        vol.Required("date"): cv.string,
+        vol.Optional("country"): cv.string,
+    }
+)
+
+
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Set up the CZ/SK Calendar integration and register services."""
+
+    async def handle_get_nameday(call: ServiceCall) -> dict[str, Any]:
+        """Return the name day(s) for an arbitrary date."""
+        date_str = call.data["date"]
+        try:
+            check_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError as err:
+            raise ServiceValidationError(
+                f"Neplatný formát data: {date_str}. Použijte YYYY-MM-DD."
+            ) from err
+
+        country = call.data.get("country")
+        if country:
+            country = country.upper()
+            if country not in (COUNTRY_CZ, COUNTRY_SK):
+                raise ServiceValidationError(f"Neznáma krajina: {country}")
+        else:
+            entries = hass.data.get(DOMAIN, {})
+            first_entry = next(iter(entries.values()), None)
+            country = first_entry.get(CONF_COUNTRY, COUNTRY_CZ) if first_entry else COUNTRY_CZ
+
+        return {
+            "date": check_date.isoformat(),
+            "country": country,
+            "nameday": get_nameday(check_date, country),
+            "names": get_nameday_names(check_date, country),
+        }
+
+    if not hass.services.has_service(DOMAIN, SERVICE_GET_NAMEDAY):
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_GET_NAMEDAY,
+            handle_get_nameday,
+            schema=_GET_NAMEDAY_SCHEMA,
+            supports_response=SupportsResponse.ONLY,
+        )
+
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

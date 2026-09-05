@@ -1,0 +1,36 @@
+# Příklad skriptu: zjištění jmenin/menín na celý týden dopředu
+#
+# Služba cz_sk_calendar.get_nameday vrací jméno vždy jen pro jeden den,
+# proto ji tento skript zavolá 7x (dnes + následujících 6 dní) a výsledky
+# spojí do jedné zprávy v persistent notification.
+#
+# Instalace: obsah zkopírujte do scripts.yaml (nebo přes UI Nastavení →
+# Automatizace a scény → Skripty → Upravit v YAML) a upravte podle potřeby
+# (např. "country" nebo cílovou notifikaci).
+#
+# Spuštění: Nástroje pro vývojáře → Akce → script.meniny_na_tyzden,
+# nebo si na skript navázat vlastní automatizaci (např. každé pondělí ráno).
+
+script:
+  meniny_na_tyzden:
+    alias: "Meniny na tento týždeň"
+    sequence:
+      - variables:
+          vysledky: []
+      - repeat:
+          count: 7
+          sequence:
+            - action: cz_sk_calendar.get_nameday
+              data:
+                date: "{{ (now() + timedelta(days=repeat.index - 1)).strftime('%Y-%m-%d') }}"
+                country: "SK"
+              response_variable: den
+            - variables:
+                vysledky: "{{ vysledky + [den] }}"
+      - action: persistent_notification.create
+        data:
+          title: "Meniny na týždeň"
+          message: >
+            {% for d in vysledky %}
+            {{ strptime(d.date, '%Y-%m-%d').strftime('%d. %b') }} má meniny {{ d.nameday }}.
+            {% endfor %}

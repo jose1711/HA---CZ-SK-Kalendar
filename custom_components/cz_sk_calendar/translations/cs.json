@@ -113,5 +113,21 @@
         "name": "Svátky a prázdniny"
       }
     }
+  },
+  "services": {
+    "get_nameday": {
+      "name": "Zjistit jmeniny pro datum",
+      "description": "Vrátí jméno (jména) slavící jmeniny v zadaný den.",
+      "fields": {
+        "date": {
+          "name": "Datum",
+          "description": "Datum ve formátu YYYY-MM-DD, pro které chcete zjistit jmeniny."
+        },
+        "country": {
+          "name": "Země",
+          "description": "CZ nebo SK. Pokud není zadáno, použije se země první nakonfigurované integrace."
+        }
+      }
+    }
   }
 }
