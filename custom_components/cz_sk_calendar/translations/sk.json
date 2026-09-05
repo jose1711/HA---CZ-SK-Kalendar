@@ -30,87 +30,8 @@
           "custom_birthdays": "Vlastné narodeniny",
           "custom_holidays": "Vlastné sviatky",
           "reminder_days": "Koľko dní vopred pripomínať",
-          "reminder_daily": "Pripomínať denne v okne",
-          "custom_events": "Vlastné udalosti (zastaralé)"
+          "reminder_daily": "Pripomínať denne v okne"
         }
-      }
-    }
-  },
-  "entity": {
-    "sensor": {
-      "workday": {
-        "name": "Pracovný deň"
-      },
-      "school_day": {
-        "name": "Školský deň"
-      },
-      "holiday": {
-        "name": "Sviatok"
-      },
-      "vacation": {
-        "name": "Prázdniny"
-      },
-      "holiday_name": {
-        "name": "Názov sviatku"
-      },
-      "special_day": {
-        "name": "Významný deň"
-      },
-      "next_birthday": {
-        "name": "Ďalšie narodeniny"
-      },
-      "days_to_birthday": {
-        "name": "Dní do narodenín"
-      },
-      "today_birthday": {
-        "name": "Dnešné narodeniny"
-      },
-      "next_family_holiday": {
-        "name": "Ďalší rodinný sviatok"
-      },
-      "days_to_family_holiday": {
-        "name": "Dní do rodinného sviatku"
-      },
-      "today_family_holiday": {
-        "name": "Dnešný rodinný sviatok"
-      },
-      "vacation_name": {
-        "name": "Názov prázdnin"
-      },
-      "next_holiday": {
-        "name": "Ďalší sviatok"
-      },
-      "next_special_day": {
-        "name": "Ďalší významný deň"
-      },
-      "next_vacation": {
-        "name": "Ďalšie prázdniny"
-      },
-      "days_to_holiday": {
-        "name": "Dní do sviatku"
-      },
-      "days_to_special_day": {
-        "name": "Dní do významného dňa"
-      },
-      "days_to_vacation": {
-        "name": "Dní do prázdnin"
-      },
-      "today_day_name": {
-        "name": "Dnešný deň"
-      },
-      "tomorrow_day_name": {
-        "name": "Zajtrajší deň"
-      }
-    },
-    "calendar": {
-      "holidays": {
-        "name": "Sviatky"
-      },
-      "vacations": {
-        "name": "Školské prázdniny"
-      },
-      "combined": {
-        "name": "Sviatky a prázdniny"
       }
     }
   },

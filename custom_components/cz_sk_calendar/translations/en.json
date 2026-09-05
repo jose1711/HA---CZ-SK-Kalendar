@@ -30,87 +30,8 @@
           "custom_birthdays": "Custom birthdays",
           "custom_holidays": "Custom holidays",
           "reminder_days": "Reminder days in advance",
-          "reminder_daily": "Notify daily in window",
-          "custom_events": "Custom events (legacy)"
+          "reminder_daily": "Notify daily in window"
         }
-      }
-    }
-  },
-  "entity": {
-    "sensor": {
-      "workday": {
-        "name": "Workday"
-      },
-      "school_day": {
-        "name": "School Day"
-      },
-      "holiday": {
-        "name": "Holiday"
-      },
-      "vacation": {
-        "name": "Vacation"
-      },
-      "holiday_name": {
-        "name": "Holiday Name"
-      },
-      "special_day": {
-        "name": "Special Day"
-      },
-      "next_birthday": {
-        "name": "Next Birthday"
-      },
-      "days_to_birthday": {
-        "name": "Days to Birthday"
-      },
-      "today_birthday": {
-        "name": "Today's Birthday"
-      },
-      "next_family_holiday": {
-        "name": "Next Family Holiday"
-      },
-      "days_to_family_holiday": {
-        "name": "Days to Family Holiday"
-      },
-      "today_family_holiday": {
-        "name": "Today's Family Holiday"
-      },
-      "vacation_name": {
-        "name": "Vacation Name"
-      },
-      "next_holiday": {
-        "name": "Next Holiday"
-      },
-      "next_special_day": {
-        "name": "Next Special Day"
-      },
-      "next_vacation": {
-        "name": "Next Vacation"
-      },
-      "days_to_holiday": {
-        "name": "Days to Holiday"
-      },
-      "days_to_special_day": {
-        "name": "Days to Special Day"
-      },
-      "days_to_vacation": {
-        "name": "Days to Vacation"
-      },
-      "today_day_name": {
-        "name": "Today's Day"
-      },
-      "tomorrow_day_name": {
-        "name": "Tomorrow's Day"
-      }
-    },
-    "calendar": {
-      "holidays": {
-        "name": "Holidays"
-      },
-      "vacations": {
-        "name": "School Vacations"
-      },
-      "combined": {
-        "name": "Holidays & Vacations"
       }
     }
   },

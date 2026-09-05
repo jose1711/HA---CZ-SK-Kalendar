@@ -12,8 +12,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
-    CONF_COUNTRY,
-    CONF_REGION,
     CONF_CUSTOM_EVENTS,
     CONF_CUSTOM_BIRTHDAYS,
     CONF_CUSTOM_HOLIDAYS,
@@ -21,14 +19,12 @@ from .const import (
     CONF_REMINDER_DAILY,
     COUNTRY_CZ,
 )
-from .entity import CZSKEntity
+from .entity import CZSKEntity, get_configured_country, get_configured_region
 from .core import (
-    get_all_holidays,
     get_all_vacations,
     get_holiday_name,
     get_nameday,
     get_nameday_names,
-    get_namedays_in_week,
     get_next_holiday,
     get_next_vacation,
     get_school_year,
@@ -203,8 +199,8 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the CZ/SK Calendar sensors."""
-    country = config_entry.data[CONF_COUNTRY]
-    region = config_entry.data[CONF_REGION]
+    country = get_configured_country(config_entry)
+    region = get_configured_region(config_entry)
 
     sensors = [
         # Boolean state sensors (kept for backwards compatibility)
@@ -258,9 +254,9 @@ async def async_setup_entry(
         # Next event sensors
         CZSKNextHolidaySensor(config_entry, country),
         CZSKNextVacationSensor(config_entry, country, region),
-    CZSKNextSpecialDaySensor(config_entry, country),
-    CZSKNextBirthdaySensor(config_entry, country),
-    CZSKNextFamilyHolidaySensor(config_entry, country),
+        CZSKNextSpecialDaySensor(config_entry, country),
+        CZSKNextBirthdaySensor(config_entry, country),
+        CZSKNextFamilyHolidaySensor(config_entry, country),
         # Day name sensors
         CZSKTodayDayNameSensor(config_entry, country),
         CZSKTomorrowDayNameSensor(config_entry, country),
@@ -270,9 +266,9 @@ async def async_setup_entry(
         # Countdown sensors
         CZSKDaysToHolidaySensor(config_entry, country),
         CZSKDaysToVacationSensor(config_entry, country, region),
-    CZSKDaysToSpecialDaySensor(config_entry, country),
-    CZSKDaysToBirthdaySensor(config_entry, country),
-    CZSKDaysToFamilyHolidaySensor(config_entry, country),
+        CZSKDaysToSpecialDaySensor(config_entry, country),
+        CZSKDaysToBirthdaySensor(config_entry, country),
+        CZSKDaysToFamilyHolidaySensor(config_entry, country),
         CZSKWorkdaysToWeekendSensor(config_entry, country),
         # School year sensor
         CZSKSchoolYearSensor(config_entry, country, region),

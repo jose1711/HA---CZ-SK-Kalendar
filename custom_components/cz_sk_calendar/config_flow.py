@@ -5,13 +5,17 @@ from typing import Any
 
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
 from homeassistant.core import callback
 
 from .const import (
     CONF_COUNTRY,
     CONF_REGION,
-    CONF_CUSTOM_EVENTS,
     CONF_CUSTOM_BIRTHDAYS,
     CONF_CUSTOM_HOLIDAYS,
     CONF_REMINDER_DAYS,
@@ -95,17 +99,19 @@ class CZSKCalendarConfigFlow(ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry):
+    def async_get_options_flow(
+        config_entry: ConfigEntry,
+    ) -> CZSKCalendarOptionsFlow:
         """Get the options flow for this handler."""
-        return CZSKCalendarOptionsFlow(config_entry)
+        return CZSKCalendarOptionsFlow()
 
 
-class CZSKCalendarOptionsFlow(ConfigFlow):
-    """Handle options flow for CZ/SK Calendar."""
+class CZSKCalendarOptionsFlow(OptionsFlow):
+    """Handle options flow for CZ/SK Calendar.
 
-    def __init__(self, config_entry) -> None:
-        """Initialize options flow."""
-        self.config_entry = config_entry
+    ``self.config_entry`` is provided by the options flow manager, so the
+    entry must not be passed in (and stored) by the flow itself.
+    """
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -116,7 +122,9 @@ class CZSKCalendarOptionsFlow(ConfigFlow):
 
         country = self.config_entry.data.get(CONF_COUNTRY, COUNTRY_CZ)
         regions = CZ_REGIONS if country == COUNTRY_CZ else SK_REGIONS
-        current_region = self.config_entry.data.get(CONF_REGION)
+        current_region = self.config_entry.options.get(
+            CONF_REGION, self.config_entry.data.get(CONF_REGION)
+        )
         current_birthdays = self.config_entry.options.get(CONF_CUSTOM_BIRTHDAYS, "")
         current_holidays = self.config_entry.options.get(CONF_CUSTOM_HOLIDAYS, "")
         current_reminder_days = self.config_entry.options.get(CONF_REMINDER_DAYS, 3)

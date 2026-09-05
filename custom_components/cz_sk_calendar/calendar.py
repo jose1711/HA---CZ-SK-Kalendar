@@ -1,9 +1,8 @@
 """Calendar platform for CZ/SK School & Work Calendar."""
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 import logging
-from typing import Any
 
 from homeassistant.components.calendar import CalendarEntity, CalendarEvent
 from homeassistant.config_entries import ConfigEntry
@@ -12,8 +11,6 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
 from .const import (
-    CONF_COUNTRY,
-    CONF_REGION,
     CONF_CUSTOM_BIRTHDAYS,
     CONF_CUSTOM_HOLIDAYS,
     CONF_CUSTOM_EVENTS,
@@ -29,9 +26,8 @@ from .core import (
     get_nameday,
     get_school_year,
     get_vacation_name,
-    is_holiday,
-    is_vacation,
 )
+from .entity import get_configured_country, get_configured_region
 from .sensor import _parse_custom_list, _get_custom_event_name, _get_next_custom_event
 
 _LOGGER = logging.getLogger(__name__)
@@ -43,8 +39,8 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the CZ/SK Calendar entities."""
-    country = config_entry.data[CONF_COUNTRY]
-    region = config_entry.data[CONF_REGION]
+    country = get_configured_country(config_entry)
+    region = get_configured_region(config_entry)
 
     calendars = [
         CZSKHolidayCalendar(config_entry, country, region),
@@ -60,7 +56,10 @@ async def async_setup_entry(
 class CZSKBaseCalendar(CalendarEntity):
     """Base class for CZ/SK Calendar entities."""
 
-    _attr_has_entity_name = True
+    # Kept in sync with CZSKEntity: with has_entity_name enabled Home Assistant
+    # prefixes the object id with the device name, which would produce ids like
+    # calendar.cz_sk_calendar_ceska_republika_praha_1_5_svatky.
+    _attr_has_entity_name = False
 
     def __init__(
         self,
@@ -76,7 +75,7 @@ class CZSKBaseCalendar(CalendarEntity):
         self._region = region
         self._calendar_type = calendar_type
 
-        region_name = (
+        self._region_name = (
             CZ_REGIONS.get(region, region)
             if country == COUNTRY_CZ
             else SK_REGIONS.get(region, region)
@@ -85,6 +84,16 @@ class CZSKBaseCalendar(CalendarEntity):
         self._attr_unique_id = f"{config_entry.entry_id}_{calendar_type}"
         self._attr_name = name
         self._event: CalendarEvent | None = None
+
+    @property
+    def suggested_object_id(self) -> str:
+        """Return a stable, language-independent object id.
+
+        See ``CZSKEntity.suggested_object_id`` - without this the id would be
+        built from the localized name and the device name, producing ids like
+        ``calendar.cz_sk_calendar_ceska_republika_praha_1_5_svatky``.
+        """
+        return self._calendar_type
 
     @property
     def device_info(self):
@@ -110,7 +119,7 @@ class CZSKHolidayCalendar(CZSKBaseCalendar):
     @property
     def event(self) -> CalendarEvent | None:
         """Return the current or next upcoming event."""
-        today = date.today()
+        today = dt_util.now().date()
         holiday_name = get_holiday_name(today, self._country)
 
         if holiday_name:
@@ -184,7 +193,7 @@ class CZSKVacationCalendar(CZSKBaseCalendar):
     @property
     def event(self) -> CalendarEvent | None:
         """Return the current or next upcoming event."""
-        today = date.today()
+        today = dt_util.now().date()
         vacation_name = get_vacation_name(today, self._country, self._region)
 
         if vacation_name:
@@ -272,7 +281,7 @@ class CZSKCombinedCalendar(CZSKBaseCalendar):
     @property
     def event(self) -> CalendarEvent | None:
         """Return the current or next upcoming event."""
-        today = date.today()
+        today = dt_util.now().date()
 
         # Check for holiday first
         holiday_name = get_holiday_name(today, self._country)
@@ -445,7 +454,7 @@ class CZSKCustomEventsCalendar(CZSKBaseCalendar):
     @property
     def event(self) -> CalendarEvent | None:
         """Return the current or next upcoming event."""
-        today = date.today()
+        today = dt_util.now().date()
         all_events = self._get_all_custom_events()
 
         if not all_events:
@@ -516,7 +525,7 @@ class CZSKNamedayCalendar(CZSKBaseCalendar):
     @property
     def event(self) -> CalendarEvent | None:
         """Return today's nameday, or the next day that carries one."""
-        today = date.today()
+        today = dt_util.now().date()
 
         for offset in range(366):
             current = today + timedelta(days=offset)
