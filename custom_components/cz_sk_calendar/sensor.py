@@ -27,6 +27,7 @@ from .core import (
     get_all_vacations,
     get_holiday_name,
     get_nameday,
+    get_nameday_names,
     get_namedays_in_week,
     get_next_holiday,
     get_next_vacation,
@@ -250,12 +251,10 @@ async def async_setup_entry(
             "mdi:star",
             lambda e: get_special_day_name(e.today, e._country),
         ),
-        CZSKNameSensor(
-            config_entry, "nameday",
-            "Jmeniny" if country == COUNTRY_CZ else "Meniny",
-            "mdi:cake-variant",
-            lambda e: get_nameday(e.today, e._country),
-        ),
+        # Name day sensors (today / tomorrow / day after tomorrow)
+        CZSKNamedaySensor(config_entry, country, 0),
+        CZSKNamedaySensor(config_entry, country, 1),
+        CZSKNamedaySensor(config_entry, country, 2),
         # Next event sensors
         CZSKNextHolidaySensor(config_entry, country),
         CZSKNextVacationSensor(config_entry, country, region),
@@ -611,6 +610,66 @@ _CZ_DAY_NAMES = [
 _SK_DAY_NAMES = [
     "Pondelok", "Utorok", "Streda", "Štvrtok", "Piatok", "Sobota", "Nedeľa"
 ]
+
+
+class CZSKNamedaySensor(CZSKBaseSensor):
+    """Sensor for the name day of today, tomorrow or the day after tomorrow.
+
+    The state is the full calendar entry for that day. Days shared by more
+    than one name (the Slovak calendar has plenty, e.g. 2. 9. "Linda,
+    Rebeka") keep every name in the state and also expose them one by one in
+    the ``names`` attribute.
+    """
+
+    # offset in days -> (entity_type, Czech name, Slovak name, icon)
+    _VARIANTS: dict[int, tuple[str, str, str, str]] = {
+        0: ("nameday", "Jmeniny", "Meniny", "mdi:cake-variant"),
+        1: ("nameday_tomorrow", "Jmeniny zítra", "Meniny zajtra", "mdi:cake"),
+        2: (
+            "nameday_day_after_tomorrow",
+            "Jmeniny pozítří",
+            "Meniny pozajtra",
+            "mdi:cake-layered",
+        ),
+    }
+
+    def __init__(
+        self, config_entry: ConfigEntry, country: str, offset: int = 0
+    ) -> None:
+        """Initialize the name day sensor.
+
+        Args:
+            config_entry: The config entry
+            country: Country code (CZ or SK)
+            offset: Days from today (0 = today, 1 = tomorrow, 2 = day after)
+        """
+        entity_type, cz_name, sk_name, icon = self._VARIANTS[offset]
+        name = cz_name if country == COUNTRY_CZ else sk_name
+        super().__init__(config_entry, entity_type, name, icon)
+        self._offset = offset
+
+    @property
+    def _target_date(self) -> date:
+        """Date this sensor reports on."""
+        return self.today + timedelta(days=self._offset)
+
+    @property
+    def native_value(self) -> str | None:
+        """Return all names of the day, comma separated."""
+        return get_nameday(self._target_date, self._country)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return additional attributes."""
+        attrs = super().extra_state_attributes.copy()
+        target = self._target_date
+        names = get_nameday_names(target, self._country)
+
+        attrs["date"] = target.isoformat()
+        attrs["offset_days"] = self._offset
+        attrs["names"] = names
+        attrs["names_count"] = len(names)
+        return attrs
 
 
 class CZSKTodayDayNameSensor(CZSKBaseSensor):
