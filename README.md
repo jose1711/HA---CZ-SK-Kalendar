@@ -150,6 +150,30 @@ obsahuje všechna, oddělená čárkou. Jednotlivá jména najdete i v atributec
 {{ state_attr('sensor.nameday_tomorrow', 'names')[0] }}
 ```
 
+### Zjištění jmenin/menín pro libovolné datum (service)
+
+Senzory `sensor.nameday*` ukazují jen dnešek, zítřek a pozítří. Pro **libovolné datum**
+(např. narozeninový kalkulátor, plánování dopředu) použijte službu (action)
+`cz_sk_calendar.get_nameday`:
+
+```yaml
+action: cz_sk_calendar.get_nameday
+data:
+  date: "2026-03-19"
+  country: "CZ"   # volitelné, výchozí je země první nakonfigurované integrace
+response_variable: vysledek
+```
+
+Vrací:
+```yaml
+date: "2026-03-19"
+country: "CZ"
+nameday: "Josef"
+names: ["Josef"]
+```
+
+Lze zavolat i ve skriptu/automatizaci a výsledek dál zpracovat pomocí `response_variable`.
+
 ### Příklad automatizace: narozeniny 3 dny dopředu
 ```yaml
 automation:

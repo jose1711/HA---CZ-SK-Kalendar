@@ -1,0 +1,21 @@
+get_nameday:
+  name: Get name day for date
+  description: Returns the name(s) celebrating their name day on a given date.
+  fields:
+    date:
+      name: Date
+      description: Date in YYYY-MM-DD format to look up.
+      required: true
+      example: "2026-03-19"
+      selector:
+        text:
+    country:
+      name: Country
+      description: CZ or SK. If not set, the country of the first configured integration is used.
+      required: false
+      example: "CZ"
+      selector:
+        select:
+          options:
+            - "CZ"
+            - "SK"

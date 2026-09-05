@@ -113,5 +113,21 @@
         "name": "Sviatky a prázdniny"
       }
     }
+  },
+  "services": {
+    "get_nameday": {
+      "name": "Zistiť meniny pre dátum",
+      "description": "Vráti meno (mená) oslávenca/oslávencov v zadaný deň.",
+      "fields": {
+        "date": {
+          "name": "Dátum",
+          "description": "Dátum vo formáte YYYY-MM-DD, pre ktorý chcete zistiť meniny."
+        },
+        "country": {
+          "name": "Krajina",
+          "description": "CZ alebo SK. Ak sa nezadá, použije sa krajina prvej nakonfigurovanej integrácie."
+        }
+      }
+    }
   }
 }
