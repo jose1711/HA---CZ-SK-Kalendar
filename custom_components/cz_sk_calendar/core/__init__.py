@@ -19,6 +19,7 @@ from .data_sources import (
     get_special_day_name,
     get_next_special_day,
     get_nameday,
+    get_nameday_names,
     get_namedays_in_week,
 )
 from .cache import cached_date, clear_cache
@@ -44,6 +45,7 @@ __all__ = [
     "get_special_day_name",
     "get_next_special_day",
     "get_nameday",
+    "get_nameday_names",
     "get_namedays_in_week",
     # Cache
     "cached_date",

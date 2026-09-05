@@ -125,6 +125,30 @@ V možnostech integrace nastavíte:
 | `sensor.days_to_holiday` | Dní do příštího svátku | číslo |
 | `sensor.days_to_special_day` | Dní do příštího významného dne | číslo |
 | `sensor.days_to_vacation` | Dní do příštích prázdnin | číslo |
+| `sensor.nameday` | Jmeniny / meniny dneška | text nebo `None` |
+| `sensor.nameday_tomorrow` | Jmeniny / meniny zítřka | text nebo `None` |
+| `sensor.nameday_day_after_tomorrow` | Jmeniny / meniny pozítřka | text nebo `None` |
+
+### Jmeniny / meniny
+
+Senzory jmenin zobrazují **všechna jména daného dne**. Slovenský kalendář jich má
+na řadě dní víc než jedno (např. 2. 9. „Linda, Rebeka“) – stav senzoru pak
+obsahuje všechna, oddělená čárkou. Jednotlivá jména najdete i v atributech:
+
+| Atribut | Popis |
+|---------|-------|
+| `names` | Seznam jmen, např. `["Linda", "Rebeka"]` |
+| `names_count` | Počet jmen daného dne |
+| `date` | Datum, ke kterému se senzor vztahuje |
+| `offset_days` | 0 = dnes, 1 = zítra, 2 = pozítří |
+
+```yaml
+# Všechna jména zítřejšího dne
+{{ states('sensor.nameday_tomorrow') }}
+
+# Jen první jméno
+{{ state_attr('sensor.nameday_tomorrow', 'names')[0] }}
+```
 
 ### Příklad automatizace: narozeniny 3 dny dopředu
 ```yaml
