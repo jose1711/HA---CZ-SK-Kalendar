@@ -51,6 +51,8 @@ Jarní prázdniny na Slovensku trvají jeden týden a jsou rozděleny do 3 turnu
 
 ## Instalace
 
+**Požadavky:** Home Assistant 2024.12.0 nebo novější.
+
 ### HACS (doporučeno)
 
 1. Otevřete HACS v Home Assistant
